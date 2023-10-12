@@ -1,0 +1,120 @@
+<?php
+
+defined('BASEPATH') or exit('No direct script access allowed');
+
+class Ibuhamil_index extends CI_Controller
+{
+    public function __construct()
+    {
+        parent::__construct();
+        $this->load->model('Petugas_model');
+        if ($this->Petugas_model->isNotLogin()) {
+            redirect(site_url('puskesmas/login'));
+        }
+        if ($this->Petugas_model->cekStatus() != 'puskesmas') {
+            redirect(site_url('posyandu'));
+        }
+
+        $this->load->model('ibuhamil_model');
+        $this->load->library('form_validation');
+    }
+
+    public function index()
+    {
+        $this->load->view('layout/head');
+
+        $data['ibuhamils'] = $this->ibuhamil_model->getAll();
+
+        $this->load->view('admin/puskesmas/ibuhamil/data', $data);
+
+        $this->load->view('layout/foot');
+    }
+
+    public function add_form()
+    {
+
+
+        $data['pekerjaan_pasien'] = $this->db->get_where('pekerjaan', ['tipe' => 'pasien'])->result_array();
+        $data['pekerjaan_suami'] = $this->db->get_where('pekerjaan', ['tipe' => 'suami'])->result_array();
+        $this->load->view('layout/head');
+
+        $this->load->view('admin/puskesmas/ibuhamil/formtambah', $data);
+
+        $this->load->view('layout/foot');
+    }
+
+    public function add()
+    {
+        $ibuhamil = $this->ibuhamil_model;
+        $validation = $this->form_validation;
+        $validation->set_rules($ibuhamil->rules());
+
+        $this->session->set_flashdata('error', 'Data gagal ditambahkan');
+
+        if ($validation->run()) {
+            $ibuhamil->save();
+            $this->session->set_flashdata('success', 'Berhasil ditambahkan');
+            $this->session->set_flashdata('error');
+        }
+
+        redirect(site_url('puskesmas/Ibuhamil_index/add_form'));
+    }
+
+    public function edit_form($id)
+    {
+        $this->load->view('layout/head');
+
+        $data['ibuhamil'] = $this->ibuhamil_model->getById($id);
+        $data['pekerjaan_pasien'] = $this->db->get_where('pekerjaan', ['tipe' => 'pasien'])->result_array();
+        $data['pekerjaan_suami'] = $this->db->get_where('pekerjaan', ['tipe' => 'suami'])->result_array();
+
+        $this->load->view('admin/puskesmas/ibuhamil/formEdit', $data);
+
+        $this->load->view('layout/foot');
+    }
+
+    public function edit_save($id = null)
+    {
+        // if (!isset($id)) {
+        //     redirect('puskesmas/ibuhamil');
+        // }
+
+        $ibuhamil = $this->ibuhamil_model;
+        $validation = $this->form_validation;
+        $validation->set_rules($ibuhamil->rules());
+
+        // var_dump($this->input->post());die;
+
+        $this->session->set_flashdata('error', 'Data gagal diedit');
+
+        if ($validation->run()) {
+            $ibuhamil->update();
+            $this->session->set_flashdata('success', 'Berhasil diedit');
+            $this->session->set_flashdata('error');
+            // redirect(site_url('puskesmas/ibuhamil/'.$id));
+            redirect(site_url('puskesmas/ibuhamil/'));
+        }
+
+        $data['ibuhamil'] = $ibuhamil->getById($id);
+        if (!$data['ibuhamil']) {
+            show_404();
+        }
+
+        $this->load->view('layout/head');
+        $this->load->view('admin/puskesmas/ibuhamil/formEdit', $data);
+        // $this->load->view("admin/puskesmas/ibuhamil/formEdit", $data);
+        $this->load->view('layout/foot');
+    }
+
+    public function delete($id = null)
+    {
+        if (!isset($id)) {
+            show_404();
+        }
+
+        if ($this->ibuhamil_model->delete($id)) {
+            $this->session->set_flashdata('success', 'Berhasil dihapus');
+            redirect(site_url('puskesmas/ibuhamil'));
+        }
+    }
+}

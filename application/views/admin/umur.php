@@ -1,0 +1,1 @@
+<input type="number" class="form-control <?php echo form_error('umur') ? 'is-invalid' : '' ?>" name="umur" placeholder="Umur Pasien" value="<?= $umur ?>" readonly>
